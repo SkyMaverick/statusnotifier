@@ -284,6 +284,11 @@ void                    status_notifier_item_set_tooltip (
                                             const gchar             *icon_name,
                                             const gchar             *title,
                                             const gchar             *body);
+void                    status_notifier_item_set_tooltip_with_pixbuf (
+                                            StatusNotifierItem      *sn,
+                                            GdkPixbuf               *pixbuf,
+                                            const gchar             *title,
+                                            const gchar             *body);
 void                    status_notifier_item_set_tooltip_title (
                                             StatusNotifierItem      *sn,
                                             const gchar             *title);

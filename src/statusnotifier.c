@@ -1477,8 +1477,7 @@ status_notifier_item_thaw_tooltip (StatusNotifierItem      *sn)
  * This is an helper function that allows to set icon name, title and body of
  * the tooltip and then emit one DBus signal NewToolTip.
  *
- * It is equivalent to the following code, and similar code can be used e.g. to
- * set the icon from a #GdkPixbuf instead:
+ * It is equivalent to the following code:
  * <programlisting>
  * status_notifier_item_freeze_tooltip (sn);
  * status_notifier_item_set_from_icon_name (sn, STATUS_NOTIFIER_TOOLTIP_ICON, icon_name);
@@ -1498,6 +1497,42 @@ status_notifier_item_set_tooltip (StatusNotifierItem      *sn,
 
     ++priv->tooltip_freeze;
     status_notifier_item_set_from_icon_name (sn, STATUS_NOTIFIER_TOOLTIP_ICON, icon_name);
+    status_notifier_item_set_tooltip_title (sn, title);
+    status_notifier_item_set_tooltip_body (sn, body);
+    status_notifier_item_thaw_tooltip (sn);
+}
+
+
+/**
+ * status_notifier_item_set_tooltip_with_pixbuf:
+ * @sn: A #StatusNotifierItem
+ * @pixbuf: The GdkPixbuf to be used for #STATUS_NOTIFIER_TOOLTIP_ICON
+ * @title: The title of the tooltip
+ * @body: The body of the tooltip
+ *
+ * This is an helper function that allows to set icon, title and body of
+ * the tooltip and then emit one DBus signal NewToolTip.
+ *
+ * It is equivalent to the following code:
+ * <programlisting>
+ * status_notifier_item_freeze_tooltip (sn);
+ * status_notifier_item_set_from_pixbuf (sn, STATUS_NOTIFIER_TOOLTIP_ICON, pixbuf);
+ * status_notifier_item_set_tooltip_title (sn, title);
+ * status_notifier_item_set_tooltip_body (sn, body);
+ * status_notifier_item_thaw_tooltip (sn);
+ * </programlisting>
+ */
+void
+status_notifier_item_set_tooltip_with_pixbuf (StatusNotifierItem    *sn,
+                                              GdkPixbuf             *pixbuf,
+                                              const gchar           *title,
+                                              const gchar           *body)
+{
+    g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
+    ++priv->tooltip_freeze;
+    status_notifier_item_set_from_pixbuf (sn, STATUS_NOTIFIER_TOOLTIP_ICON, pixbuf);
     status_notifier_item_set_tooltip_title (sn, title);
     status_notifier_item_set_tooltip_body (sn, body);
     status_notifier_item_thaw_tooltip (sn);
