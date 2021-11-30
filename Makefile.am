@@ -26,30 +26,44 @@ include_HEADERS = src/statusnotifier.h src/statusnotifier-compat.h
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = statusnotifier.pc
 
+TEMPL_CLOSURES = src/closures.template
+TEMPL_ENUMS_H = src/enums.h.template
+TEMPL_ENUMS_C = src/enums.c.template
+
+src/closures.h: $(TEMPL_CLOSURES)
+		$(AM_V_GEN)$(GLIB_GENMARSHAL) --header --output=$@ $<
+
+src/closures.c: $(TEMPL_CLOSURES) src/closures.h
+		$(AM_V_GEN)$(GLIB_GENMARSHAL) --include-header=src/closures.h --body --output=$@ $<
+
+src/enums.h: $(include_HEADERS) $(TEMPL_ENUMS_H)
+		$(AM_V_GEN)$(GLIB_MKENUMS) --template=$(TEMPL_ENUMS_H) --output=$@ $(include_HEADERS)
+
+src/enums.c: $(include_HEADERS) $(TEMPL_ENUMS_C) src/enums.h
+		$(AM_V_GEN)$(GLIB_MKENUMS) --template=$(TEMPL_ENUMS_C) --output=$@ $(include_HEADERS)
+
+GLIB_GENERATED_FILES = \
+	src/closures.h \
+	src/closures.c \
+	src/enums.h \
+	src/enums.c
+
 libstatusnotifier_la_LDFLAGS = -version-info $(LIB_VERSION_INFO)
 libstatusnotifier_la_CFLAGS = ${AM_CFLAGS} @DEP_CFLAGS@
 libstatusnotifier_la_LIBADD = @DEP_LIBS@
 libstatusnotifier_la_SOURCES = \
-	src/enums.h \
-	src/enums.c \
-	src/statusnotifier.h \
-	src/statusnotifier.c \
-	src/closures.h \
-	src/closures.c \
-	src/interfaces.h
+    $(GLIB_GENERATED_FILES) \
+    src/statusnotifier.h \
+    src/statusnotifier.c \
+    src/interfaces.h
 
 EXTRA_DIST = \
-	src/closures \
-	src/closures.def \
-	src/mkenums \
-	m4/introspection.m4
-
-src/enums.h: src/statusnotifier.h
-	$(AM_V_GEN) cd $(top_srcdir)/src && ./mkenums
-
-src/enums.c: src/statusnotifier.h
-	$(AM_V_GEN) cd $(top_srcdir)/src && ./mkenums
-
+    src/closures \
+    $(TEMPL_CLOSURES) \
+    $(TEMPL_ENUMS_C)\
+    $(TEMPL_ENUMS_H)\
+    src/mkenums \
+    m4/introspection.m4
 
 if HAVE_INTROSPECTION
 BUILT_GIRSOURCES = StatusNotifier-$(GIR_VERSION).gir
@@ -77,5 +91,5 @@ typelibs_DATA = $(BUILT_GIRSOURCES:.gir=.typelib)
 		--includedir=$(srcdir) --includedir=. $(INTROSPECTION_COMPILER_OPTS) \
 		$< -o $(@F)
 
-CLEANFILES += $(BUILT_GIRSOURCES) $(typelibs_DATA)
+CLEANFILES += $(BUILT_GIRSOURCES) $(typelibs_DATA) $(GLIB_GENERATED_FILES)
 endif

@@ -1,5 +1,5 @@
 #!/bin/bash
 
-glib-genmarshal --header closures.def >closures.h.new
-glib-genmarshal --body closures.def >closures.c.new
+glib-genmarshal --header closures.template >closures.h.new
+glib-genmarshal --body closures.template >closures.c.new
 

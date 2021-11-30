@@ -44,17 +44,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability foreign silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 
-# Checks for programs.
-AC_PROG_CC
-AM_PROG_AR
-
-LT_INIT
-LIB_VERSION_INFO="lib_current:lib_revision:lib_age"
-AC_SUBST(LIB_VERSION_INFO)
-
-GIR_VERSION="gir_version"
-AC_SUBST(GIR_VERSION)
-
 # Option to make doc
 m4_ifdef([GTK_DOC_CHECK], [
 GTK_DOC_CHECK([1.19],[--flavour no-tmpl])
@@ -67,6 +56,17 @@ AC_PATH_PROG([XSLTPROC], [xsltproc])
 ],[
 AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 ])
+
+# Checks for programs.
+AC_PROG_CC
+AM_PROG_AR
+
+LT_INIT
+LIB_VERSION_INFO="lib_current:lib_revision:lib_age"
+AC_SUBST(LIB_VERSION_INFO)
+
+GIR_VERSION="gir_version"
+AC_SUBST(GIR_VERSION)
 
 # Option for example
 AC_ARG_ENABLE([example],
@@ -88,6 +88,10 @@ AC_ARG_ENABLE([dbusmenu],
 	[dbusmenu=$enableval], [dbusmenu=no])
 
 # Checks for libraries.
+PKG_PROG_PKG_CONFIG([0.28])
+PKG_CHECK_VAR([GLIB_MKENUMS], [glib-2.0], [glib_mkenums])
+PKG_CHECK_VAR([GLIB_GENMARSHAL], [glib-2.0], [glib_genmarshal])
+
 PKG_CHECK_MODULES(GOBJECT, [gobject-2.0], , AC_MSG_ERROR([GLib/GObject is required]))
 PKG_CHECK_MODULES(GIO, [gio-2.0], , AC_MSG_ERROR([GLib/GIO is required]))
 PKG_CHECK_MODULES(GDK, [gdk-3.0], , AC_MSG_ERROR([GDK 3 is required]))
