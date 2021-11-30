@@ -34,14 +34,14 @@ typedef struct _StatusNotifierItem          StatusNotifierItem;
 typedef struct _StatusNotifierItemPrivate   StatusNotifierItemPrivate;
 typedef struct _StatusNotifierItemClass     StatusNotifierItemClass;
 
+GType status_notifier_item_get_type (void) G_GNUC_CONST;
+
 #define STATUS_NOTIFIER_TYPE_ITEM           (status_notifier_item_get_type ())
 #define STATUS_NOTIFIER_ITEM(obj)           (G_TYPE_CHECK_INSTANCE_CAST ((obj), STATUS_NOTIFIER_TYPE_ITEM, StatusNotifierItem))
 #define STATUS_NOTIFIER_ITEM_CLASS(klass)   (G_TYPE_CHECK_CLASS_CAST ((klass), STATUS_NOTIFIER_TYPE_ITEM, StatusNotifierItemClass))
 #define STATUS_NOTIFIER_IS_ITEM(obj)        (G_TYPE_CHECK_INSTANCE_TYPE ((obj), STATUS_NOTIFIER_TYPE_ITEM))
 #define STATUS_NOTIFIER_IS_ITEM_CLASS(klass)(G_TYPE_CHECK_CLASS_TYPE ((obj), STATUS_NOTIFIER_TYPE_ITEM))
 #define STATUS_NOTIFIER_ITEM_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), STATUS_NOTIFIER_TYPE_ITEM, StatusNotifierItemClass))
-
-GType                   status_notifier_item_get_type               (void) G_GNUC_CONST;
 
 #define STATUS_NOTIFIER_ERROR               g_quark_from_static_string ("StatusNotifier error")
 /**

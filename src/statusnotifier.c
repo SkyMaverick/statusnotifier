@@ -193,7 +193,22 @@ static void     status_notifier_item_get_property   (GObject            *object,
                                                      GParamSpec         *pspec);
 static void     status_notifier_item_finalize       (GObject            *object);
 
-G_DEFINE_TYPE (StatusNotifierItem, status_notifier_item, G_TYPE_OBJECT)
+#if defined(GLIB_VERSION_2_38)
+
+    G_DEFINE_TYPE_WITH_CODE(StatusNotifierItem, status_notifier_item, G_TYPE_OBJECT,
+                            G_ADD_PRIVATE(StatusNotifierItem));
+
+    #define STATUS_NOTIFIER_ITEM_GET_PRIVATE(object) \
+        (StatusNotifierItemPrivate *) status_notifier_item_get_instance_private((StatusNotifierItem*)object)
+
+#else /* GLIB < 2.38 */
+
+    G_DEFINE_TYPE (StatusNotifierItem, status_notifier_item, G_TYPE_OBJECT)
+
+    #define STATUS_NOTIFIER_ITEM_GET_PRIVATE(object) \
+        (StatusNotifierItemPrivate *) ((StatusNotifierItem *)(object))->priv
+
+#endif /* GLIB < 2.38 */
 
 static void
 status_notifier_item_class_init (StatusNotifierItemClass *klass)
@@ -688,15 +703,18 @@ status_notifier_item_class_init (StatusNotifierItemClass *klass)
             2,
             G_TYPE_INT,
             TYPE_STATUS_NOTIFIER_SCROLL_ORIENTATION);
-
+#if !defined(GLIB_VERSION_2_38)
     g_type_class_add_private (klass, sizeof (StatusNotifierItemPrivate));
+#endif /* GLIB < 2.38 */
 }
 
 static void
 status_notifier_item_init (StatusNotifierItem *sn)
 {
+#if !defined(GLIB_VERSION_2_38)
     sn->priv = G_TYPE_INSTANCE_GET_PRIVATE (sn,
             STATUS_NOTIFIER_TYPE_ITEM, StatusNotifierItemPrivate);
+#endif /* GLIB < 2.38 */
 }
 
 static void
@@ -706,7 +724,7 @@ status_notifier_item_set_property (GObject            *object,
                                    GParamSpec         *pspec)
 {
     StatusNotifierItem *sn = (StatusNotifierItem *) object;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(object);
 
     switch (prop_id)
     {
@@ -790,7 +808,7 @@ status_notifier_item_get_property (GObject            *object,
                                    GParamSpec         *pspec)
 {
     StatusNotifierItem *sn = (StatusNotifierItem *) object;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(object);
 
     switch (prop_id)
     {
@@ -871,7 +889,7 @@ status_notifier_item_get_property (GObject            *object,
 static void
 free_icon (StatusNotifierItem *sn, StatusNotifierIcon icon)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (priv->icon[icon].has_pixbuf)
         g_object_unref (priv->icon[icon].pixbuf);
@@ -884,7 +902,7 @@ free_icon (StatusNotifierItem *sn, StatusNotifierIcon icon)
 static void
 dbus_free (StatusNotifierItem *sn)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (priv->dbus_watch_id > 0)
     {
@@ -934,7 +952,8 @@ static void
 status_notifier_item_finalize (GObject *object)
 {
     StatusNotifierItem *sn = (StatusNotifierItem *) object;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(object);
+
     guint i;
 
     g_free (priv->id);
@@ -953,7 +972,7 @@ status_notifier_item_finalize (GObject *object)
 static void
 dbus_notify (StatusNotifierItem *sn, guint prop)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
     const gchar *signal;
 
     if (priv->state !=  STATUS_NOTIFIER_STATE_REGISTERED)
@@ -1069,7 +1088,9 @@ const gchar *
 status_notifier_item_get_id (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    return sn->priv->id;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->id;
 }
 
 /**
@@ -1084,7 +1105,9 @@ StatusNotifierCategory
 status_notifier_item_get_category (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), -1);
-    return sn->priv->category;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->category;
 }
 
 /**
@@ -1106,10 +1129,8 @@ status_notifier_item_set_from_pixbuf (StatusNotifierItem      *sn,
                                       StatusNotifierIcon       icon,
                                       GdkPixbuf               *pixbuf)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     free_icon (sn, icon);
     priv->icon[icon].has_pixbuf = TRUE;
@@ -1139,10 +1160,8 @@ status_notifier_item_set_from_icon_name (StatusNotifierItem      *sn,
                                          StatusNotifierIcon       icon,
                                          const gchar             *icon_name)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     free_icon (sn, icon);
     priv->icon[icon].icon_name = g_strdup (icon_name);
@@ -1167,7 +1186,9 @@ status_notifier_item_has_pixbuf (StatusNotifierItem      *sn,
                                  StatusNotifierIcon       icon)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), FALSE);
-    return sn->priv->icon[icon].has_pixbuf;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->icon[icon].has_pixbuf;
 }
 
 /**
@@ -1184,10 +1205,8 @@ GdkPixbuf *
 status_notifier_item_get_pixbuf (StatusNotifierItem      *sn,
                                  StatusNotifierIcon       icon)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (!priv->icon[icon].has_pixbuf)
         return NULL;
@@ -1209,7 +1228,9 @@ gint
 status_notifier_item_get_register_name_on_bus (StatusNotifierItem *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), -1);
-    return sn->priv->register_bus_name;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->register_bus_name;
 }
 
 /**
@@ -1227,10 +1248,8 @@ gchar *
 status_notifier_item_get_icon_name (StatusNotifierItem      *sn,
                                     StatusNotifierIcon       icon)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (priv->icon[icon].has_pixbuf)
         return NULL;
@@ -1254,10 +1273,8 @@ void
 status_notifier_item_set_attention_movie_name (StatusNotifierItem      *sn,
                                                const gchar             *movie_name)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     g_free (priv->attention_movie_name);
     priv->attention_movie_name = g_strdup (movie_name);
@@ -1279,7 +1296,9 @@ gchar *
 status_notifier_item_get_attention_movie_name (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    return g_strdup (sn->priv->attention_movie_name);
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return g_strdup (priv->attention_movie_name);
 }
 
 /**
@@ -1294,10 +1313,8 @@ void
 status_notifier_item_set_title (StatusNotifierItem      *sn,
                                 const gchar             *title)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     g_free (priv->title);
     priv->title = g_strdup (title);
@@ -1318,7 +1335,9 @@ gchar *
 status_notifier_item_get_title (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    return g_strdup (sn->priv->title);
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return g_strdup (priv->title);
 }
 
 /**
@@ -1333,10 +1352,8 @@ void
 status_notifier_item_set_status (StatusNotifierItem      *sn,
                                  StatusNotifierStatus     status)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     priv->status = status;
 
@@ -1356,7 +1373,9 @@ StatusNotifierStatus
 status_notifier_item_get_status (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), -1);
-    return sn->priv->status;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->status;
 }
 
 /**
@@ -1374,10 +1393,8 @@ void
 status_notifier_item_set_window_id (StatusNotifierItem      *sn,
                                     guint32                  window_id)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     priv->window_id = window_id;
 
@@ -1397,7 +1414,9 @@ guint32
 status_notifier_item_get_window_id (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), 0);
-    return sn->priv->window_id;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->window_id;
 }
 
 /**
@@ -1420,7 +1439,9 @@ void
 status_notifier_item_freeze_tooltip (StatusNotifierItem      *sn)
 {
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    ++sn->priv->tooltip_freeze;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    ++priv->tooltip_freeze;
 }
 
 /**
@@ -1437,10 +1458,9 @@ status_notifier_item_freeze_tooltip (StatusNotifierItem      *sn)
 void
 status_notifier_item_thaw_tooltip (StatusNotifierItem      *sn)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     g_return_if_fail (priv->tooltip_freeze > 0);
 
     if (--priv->tooltip_freeze == 0)
@@ -1473,10 +1493,8 @@ status_notifier_item_set_tooltip (StatusNotifierItem      *sn,
                                   const gchar             *title,
                                   const gchar             *body)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     ++priv->tooltip_freeze;
     status_notifier_item_set_from_icon_name (sn, STATUS_NOTIFIER_TOOLTIP_ICON, icon_name);
@@ -1501,10 +1519,8 @@ void
 status_notifier_item_set_tooltip_title (StatusNotifierItem      *sn,
                                         const gchar             *title)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     g_free (priv->tooltip_title);
     priv->tooltip_title = g_strdup (title);
@@ -1527,7 +1543,9 @@ gchar *
 status_notifier_item_get_tooltip_title (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    return g_strdup (sn->priv->tooltip_title);
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return g_strdup (priv->tooltip_title);
 }
 
 /**
@@ -1549,10 +1567,8 @@ void
 status_notifier_item_set_tooltip_body (StatusNotifierItem      *sn,
                                        const gchar             *body)
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     g_free (priv->tooltip_body);
     priv->tooltip_body = g_strdup (body);
@@ -1574,7 +1590,9 @@ gchar *
 status_notifier_item_get_tooltip_body (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    return g_strdup (sn->priv->tooltip_body);
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return g_strdup (priv->tooltip_body);
 }
 
 static void
@@ -1627,7 +1645,8 @@ method_call (GDBusConnection        *conn _UNUSED_,
 static GVariantBuilder *
 get_builder_for_icon_pixmap (StatusNotifierItem *sn, StatusNotifierIcon icon)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     GVariantBuilder *builder;
     cairo_surface_t *surface;
     cairo_t *cr;
@@ -1682,7 +1701,7 @@ get_prop (GDBusConnection        *conn _UNUSED_,
           gpointer                data)
 {
     StatusNotifierItem *sn = (StatusNotifierItem *) data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (!g_strcmp0 (property, "Id"))
         return g_variant_new ("s", priv->id);
@@ -1787,7 +1806,7 @@ get_prop (GDBusConnection        *conn _UNUSED_,
 static void
 dbus_failed (StatusNotifierItem *sn, GError *error, gboolean fatal)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     dbus_free (sn);
     if (fatal)
@@ -1805,7 +1824,8 @@ bus_acquired (GDBusConnection *conn, const gchar *name _UNUSED_, gpointer data)
 {
     GError *err = NULL;
     StatusNotifierItem *sn = (StatusNotifierItem *) data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     GDBusInterfaceVTable interface_vtable = {
         .method_call = method_call,
         .get_property = get_prop,
@@ -1835,10 +1855,9 @@ register_item_cb (GObject *sce, GAsyncResult *result, gpointer data)
 {
     GError *err = NULL;
     StatusNotifierItem *sn = (StatusNotifierItem *) data;
-    StatusNotifierItemPrivate *priv = sn->priv;
-    GVariant *variant;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
-    variant = g_dbus_proxy_call_finish ((GDBusProxy *) sce, result, &err);
+    GVariant *variant = g_dbus_proxy_call_finish ((GDBusProxy *) sce, result, &err);
     if (!variant)
     {
         dbus_failed (sn, err, TRUE);
@@ -1854,7 +1873,7 @@ static void
 name_acquired (GDBusConnection *conn _UNUSED_, const gchar *name, gpointer data)
 {
     StatusNotifierItem *sn = (StatusNotifierItem *) data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     g_dbus_proxy_call (priv->dbus_proxy,
             "RegisterStatusNotifierItem",
@@ -1936,7 +1955,7 @@ watcher_signal (GDBusProxy          *proxy _UNUSED_,
                 GVariant            *params _UNUSED_,
                 StatusNotifierItem  *sn)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (!g_strcmp0 (signal, "StatusNotifierHostRegistered"))
     {
@@ -1952,7 +1971,8 @@ proxy_cb (GObject *sce _UNUSED_, GAsyncResult *result, gpointer data)
 {
     GError *err = NULL;
     StatusNotifierItem *sn = (StatusNotifierItem *) data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     GVariant *variant;
 
     priv->dbus_proxy = g_dbus_proxy_new_for_bus_finish (result, &err);
@@ -1997,7 +2017,8 @@ watcher_appeared (GDBusConnection   *conn _UNUSED_,
                   gpointer           data)
 {
     StatusNotifierItem *sn = data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     GDBusNodeInfo *info;
 
     g_bus_unwatch_name (priv->dbus_watch_id);
@@ -2023,7 +2044,8 @@ watcher_vanished (GDBusConnection   *conn _UNUSED_,
 {
     GError *err = NULL;
     StatusNotifierItem *sn = data;
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+
     guint id;
 
     /* keep the watch active, so if a watcher shows up we'll resume the
@@ -2085,10 +2107,8 @@ void
 status_notifier_item_register (StatusNotifierItem      *sn)
 
 {
-    StatusNotifierItemPrivate *priv;
-
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     if (priv->state == STATUS_NOTIFIER_STATE_REGISTERING
             || priv->state == STATUS_NOTIFIER_STATE_REGISTERED)
@@ -2116,7 +2136,9 @@ StatusNotifierState
 status_notifier_item_get_state (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), FALSE);
-    return sn->priv->state;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->state;
 }
 
 /**
@@ -2139,7 +2161,9 @@ status_notifier_item_set_item_is_menu (StatusNotifierItem      *sn,
                                        gboolean                 is_menu)
 {
     g_return_if_fail (STATUS_NOTIFIER_IS_ITEM (sn));
-    sn->priv->item_is_menu = is_menu;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    priv->item_is_menu = is_menu;
 }
 
 /**
@@ -2157,7 +2181,9 @@ gboolean
 status_notifier_item_get_item_is_menu (StatusNotifierItem      *sn)
 {
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), FALSE);
-    return sn->priv->item_is_menu;
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
+    return priv->item_is_menu;
 }
 
 /**
@@ -2185,11 +2211,11 @@ status_notifier_item_set_context_menu (StatusNotifierItem      *sn,
                                        GObject                 *menu)
 {
 #if USE_DBUSMENU
-    StatusNotifierItemPrivate *priv;
-    DbusmenuMenuitem *root = NULL;
 
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), FALSE);
     g_return_val_if_fail (!menu || GTK_IS_MENU (menu), FALSE);
+
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
     priv = sn->priv;
 
     if (priv->menu)
@@ -2201,7 +2227,8 @@ status_notifier_item_set_context_menu (StatusNotifierItem      *sn,
     {
         g_object_ref_sink (priv->menu);
 
-        root = dbusmenu_gtk_parse_menu_structure (GTK_WIDGET (priv->menu));
+        DbusmenuMenuitem *root = dbusmenu_gtk_parse_menu_structure (
+                                        GTK_WIDGET (priv->menu));
 
         if (priv->menu_service == NULL)
             priv->menu_service = dbusmenu_server_new ("/MenuBar");
@@ -2243,11 +2270,9 @@ GObject *
 status_notifier_item_get_context_menu (StatusNotifierItem      *sn)
 {
 #if USE_DBUSMENU
-    StatusNotifierItemPrivate *priv;
-
     g_return_val_if_fail (STATUS_NOTIFIER_IS_ITEM (sn), NULL);
-    priv = sn->priv;
 
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
     return priv->menu;
 #else
     return NULL;
