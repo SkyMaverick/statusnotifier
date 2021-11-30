@@ -54,8 +54,7 @@ libstatusnotifier_la_LIBADD = @DEP_LIBS@
 libstatusnotifier_la_SOURCES = \
     $(GLIB_GENERATED_FILES) \
     src/statusnotifier.h \
-    src/statusnotifier.c \
-    src/interfaces.h
+    src/statusnotifier.c
 
 EXTRA_DIST = \
     src/closures \
@@ -63,33 +62,40 @@ EXTRA_DIST = \
     $(TEMPL_ENUMS_C)\
     $(TEMPL_ENUMS_H)\
     src/mkenums \
+    src/interfaces.h \
     m4/introspection.m4
 
-if HAVE_INTROSPECTION
-BUILT_GIRSOURCES = StatusNotifier-$(GIR_VERSION).gir
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)/src --warn-all
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)/src
 
-GIR_EXTRA =
+if HAVE_INTROSPECTION
+introspection_sources = \
+	src/enums.h \
+	src/enums.c \
+    src/statusnotifier.h \
+    src/statusnotifier.c
+
+StatusNotifier-1.0.gir: $(lib_LTLIBRARIES)
+StatusNotifier_1_0_gir_INCLUDES = GObject-2.0 GdkPixbuf-2.0
 if USE_DBUSMENU
-GIR_EXTRA += -DUSE_DBUSMENU=1 --include=Gtk-3.0
+StatusNotifier_1_0_gir_INCLUDES += Dbusmenu-0.4
 endif
-StatusNotifier-$(GIR_VERSION).gir: $(INTROSPECTION_SCANNER) libstatusnotifier.la
-	$(AM_V_GEN) $(INTROSPECTION_SCANNER) \
-		-v --warn-all -n StatusNotifier --nsversion=$(GIR_VERSION) \
-		--include=GObject-2.0 --include=GdkPixbuf-2.0 \
-		$(INCLUDES) $(GIR_EXTRA) \
-		--library=statusnotifier -o $@ \
-		src/statusnotifier.[ch] src/enums.[ch]
+StatusNotifier_1_0_gir_CFLAGS = $(AM_CFLAGS)
+StatusNotifier_1_0_gir_LIBS = $(lib_LTLIBRARIES)
+StatusNotifier_1_0_gir_FILES = $(introspection_sources)
+StatusNotifier_1_0_gir_VERSION = $(GIR_VERSION)
+
+INTROSPECTION_GIRS += StatusNotifier-1.0.gir
 
 girdir = $(datadir)/gir-1.0
-gir_DATA = $(BUILT_GIRSOURCES)
+gir_DATA = $(INTROSPECTION_GIRS)
 
-typelibsdir = $(libdir)/girepository-1.0
-typelibs_DATA = $(BUILT_GIRSOURCES:.gir=.typelib)
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
-%.typelib: %.gir $(INTROSPECTION_COMPILER)
-	$(AM_V_GEN) $(INTROSPECTION_COMPILER) \
-		--includedir=$(srcdir) --includedir=. $(INTROSPECTION_COMPILER_OPTS) \
-		$< -o $(@F)
-
-CLEANFILES += $(BUILT_GIRSOURCES) $(typelibs_DATA) $(GLIB_GENERATED_FILES)
+CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
+
+CLEANFILES += $(GLIB_GENERATED_FILES)
