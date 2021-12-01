@@ -1,0 +1,8 @@
+option ('enable_docs', type: 'boolean', value: false,
+        description: 'build library documentation')
+option ('enable_example', type: 'boolean', value: false,
+        description: 'build example application')
+option ('enable_dbusmenu', type: 'boolean', value: true,
+        description: 'enable dbusmenu support')
+option ('enable_introspection', type: 'boolean', value: true,
+        description: 'enable GIR bindings')
