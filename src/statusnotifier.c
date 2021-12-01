@@ -714,6 +714,8 @@ status_notifier_item_init (StatusNotifierItem *sn)
 #if !defined(GLIB_VERSION_2_38)
     sn->priv = G_TYPE_INSTANCE_GET_PRIVATE (sn,
             STATUS_NOTIFIER_TYPE_ITEM, StatusNotifierItemPrivate);
+#else
+    (void)sn; // suppressing unused warning
 #endif /* GLIB < 2.38 */
 }
 
@@ -982,7 +984,7 @@ dbus_notify (StatusNotifierItem *sn, guint prop)
     {
         case PROP_STATUS:
             {
-                const gchar const *s_status[] = {
+                const gchar * const s_status[] = {
                     "Passive",
                     "Active",
                     "NeedsAttention"
@@ -1742,7 +1744,7 @@ get_prop (GDBusConnection        *conn _UNUSED_,
         return g_variant_new ("s", priv->id);
     else if (!g_strcmp0 (property, "Category"))
     {
-        const gchar const *s_category[] = {
+        const gchar *const s_category[] = {
             "ApplicationStatus",
             "Communications",
             "SystemServices",
@@ -1754,7 +1756,7 @@ get_prop (GDBusConnection        *conn _UNUSED_,
         return g_variant_new ("s", (priv->title) ? priv->title : "");
     else if (!g_strcmp0 (property, "Status"))
     {
-        const gchar const *s_status[] = {
+        const gchar *const s_status[] = {
             "Passive",
             "Active",
             "NeedsAttention"
@@ -1942,7 +1944,7 @@ name_lost (GDBusConnection *conn, const gchar *name _UNUSED_, gpointer data)
 static gboolean
 should_register_name (StatusNotifierItem *sn)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
 
     /* If running inside Flatpak override the value with what it is actually doing */
     if (priv->register_bus_name == -1)
@@ -1957,7 +1959,7 @@ should_register_name (StatusNotifierItem *sn)
 static void
 dbus_reg_item (StatusNotifierItem *sn)
 {
-    StatusNotifierItemPrivate *priv = sn->priv;
+    StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
     gchar buf[64], *b = buf;
 
     if (!should_register_name (sn))
