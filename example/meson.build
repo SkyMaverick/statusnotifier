@@ -5,7 +5,7 @@ example_sni = files('''
         sn-example.c
 '''.strip())
 
-sni_lib = executable ('sn-example', example_sni,
+sni_example_app = executable ('sn-example', example_sni,
         dependencies: example_deps,
         include_directories: sni_incs,
         link_with: sni_lib,
