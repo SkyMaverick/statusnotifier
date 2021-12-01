@@ -17,3 +17,6 @@ configure_file (
 )
 
 subdir('src')
+if get_option('enable_example')
+    subdir('example')
+endif
