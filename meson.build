@@ -3,7 +3,6 @@ project ('statusnotifier', 'c',
          license: 'GPL3+',
          default_options:[
             'warning_level=2',
-
          ],
          meson_version: '>=0.59')
 
@@ -34,20 +33,15 @@ foreach dep : sni_deps_list
     sni_deps_array += dep[0]
 endforeach
 
-sni_pkg_conf = configure_file (
-    input: files('statusnotifier.pc.in'),
-    output: 'statusnotifier.pc',
-    configuration: {
-        'prefix'        : get_option('prefix'),
-        'exec_prefix'   : get_option('prefix'), #FIXME Meson don't define exec_prefix,
-        'libdir'        : '${prefix}'/get_option('libdir'),
-        'includedir'    : '${prefix}'/get_option('includedir'),
-
-        'VERSION' : meson.project_version(),
-        'DEP_PACKAGES' : ' '.join(sni_deps_array)
-    },
-    install: true,
-    install_dir: get_option('datadir')/'pkgconfig')
+pkgconf_app = import ('pkgconfig')
+pkgconf_app.generate(
+    libraries: [sni_lib],
+      version: meson.project_version(),
+         name: 'StatusNotifier',
+     filebase: meson.project_name(),
+  description: 'Status Notifier Item Library',
+     requires: sni_deps_array,
+  install_dir: get_option('datadir')/'pkgconfig')
 
 # Generate example app
 if get_option('enable_example')
