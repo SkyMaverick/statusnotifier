@@ -5,6 +5,7 @@ sni_source = files ('''
 sni_source_h = files ('''
     statusnotifier.h
 '''.split())
+install_headers(sni_source_h)
 
 sni_incs = include_directories('''
         .
@@ -38,7 +39,7 @@ configure_file (
     output: 'config.h',
     configuration : sni_config)
 
-sni_lib = shared_library ('sni', sni_source,
+sni_lib = shared_library (meson.project_name(), sni_source,
         dependencies: sni_deps,
         install: true)
 
@@ -61,7 +62,6 @@ if get_option('enable_introspection')
         sni_gir_incs  += 'Dbusmenu-0.4'
         sni_vapi_deps += 'Dbusmenu-0.4'
     endif
-
 
     sni_gir_extra = '''
         --no-libtool
