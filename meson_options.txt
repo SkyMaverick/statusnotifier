@@ -6,3 +6,5 @@ option ('enable_dbusmenu', type: 'boolean', value: true,
         description: 'enable dbusmenu support')
 option ('enable_introspection', type: 'boolean', value: true,
         description: 'enable GIR bindings')
+option ('enable_vala', type: 'boolean', value: true,
+        description: 'enable Vala bindings (*.vapi)')

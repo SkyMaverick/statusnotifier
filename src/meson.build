@@ -43,6 +43,10 @@ sni_lib = shared_library (meson.project_name(), sni_source,
         dependencies: sni_deps,
         install: true)
 
+sni_extern = declare_dependency (
+            include_directories: sni_incs,
+            link_with: sni_lib)
+
 sni_source_build_dir = meson.current_build_dir()
 
 # Generate GIR and bindings for external dependencies
@@ -82,18 +86,16 @@ if get_option('enable_introspection')
                    install_dir_gir: get_option('datadir')/'gir-1.0',
                    install_dir_typelib: get_option('libdir')/'girepository-1.0')
 
-    sni_extern = declare_dependency (
-                include_directories: sni_incs,
-                link_with: sni_lib)
+    if get_option('enable_vala')
+        sni_vapi = gnome_rt.generate_vapi (
+                meson.project_name(),
+                sources: sni_gir[0],
+                packages: sni_vapi_deps,
+                install: true)
 
-    sni_vapi = gnome_rt.generate_vapi (
-            meson.project_name(),
-            sources: sni_gir[0],
-            packages: sni_vapi_deps,
-            install: true)
-
-    sni_extern_vala = declare_dependency (
-                include_directories: sni_incs,
-                link_with: sni_lib,
-                dependencies: sni_vapi)
+        sni_extern_vala = declare_dependency (
+                    include_directories: sni_incs,
+                    link_with: sni_lib,
+                    dependencies: sni_vapi)
+    endif
 endif
