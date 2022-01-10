@@ -2253,7 +2253,6 @@ status_notifier_item_set_context_menu (StatusNotifierItem      *sn,
     g_return_val_if_fail (!menu || GTK_IS_MENU (menu), FALSE);
 
     StatusNotifierItemPrivate *priv = STATUS_NOTIFIER_ITEM_GET_PRIVATE(sn);
-    priv = sn->priv;
 
     if (priv->menu)
         g_object_unref (priv->menu);
